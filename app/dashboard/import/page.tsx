@@ -1,0 +1,1 @@
+import { CsvImporter } from "@/components/import/csv-importer"; export default function ImportPage(){return <><div className="topline"><div><h1>Import CSV</h1><p className="muted">Alimentez votre base clients depuis votre export métier.</p></div></div><CsvImporter/></>}

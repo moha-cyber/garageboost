@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { calculateRiskScore } from "@/lib/scoring"; export async function POST(req:Request){const {lastVisit,totalSpent}=await req.json();return NextResponse.json(calculateRiskScore(lastVisit??null,Number(totalSpent)||0));}
