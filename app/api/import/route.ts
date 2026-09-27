@@ -18,11 +18,27 @@ const value = (
 const money = (value: string): number => {
   if (!value) return 0;
 
-  const normalized = value
+  let normalized = value
     .replace(/\s/g, "")
     .replace(/[€$£]/g, "")
-    .replace(/[^0-9,.-]/g, "")
-    .replace(",", ".");
+    .replace(/[^0-9,.-]/g, "");
+
+  if (!normalized) return 0;
+
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      normalized = normalized.replace(/\./g, "").replace(",", ".");
+    } else {
+      normalized = normalized.replace(/,/g, "");
+    }
+  } else if (lastComma !== -1) {
+    normalized = normalized.replace(",", ".");
+  } else if ((normalized.match(/\./g) ?? []).length > 1) {
+    normalized = normalized.replace(/\./g, "");
+  }
 
   const result = Number(normalized);
   return Number.isFinite(result) ? result : 0;
@@ -33,21 +49,39 @@ const date = (value: string): string | null => {
 
   const normalized = value.trim();
 
+  const toIsoDate = (year: number, month: number, day: number): string | null => {
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.getUTCFullYear() !== year ||
+      parsed.getUTCMonth() !== month - 1 ||
+      parsed.getUTCDate() !== day
+    ) {
+      return null;
+    }
+
+    return parsed.toISOString().slice(0, 10);
+  };
+
   // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-    const parsed = new Date(`${normalized}T00:00:00Z`);
-    return Number.isNaN(parsed.getTime())
-      ? null
-      : parsed.toISOString().slice(0, 10);
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+  if (isoMatch) {
+    return toIsoDate(
+      Number(isoMatch[1]),
+      Number(isoMatch[2]),
+      Number(isoMatch[3])
+    );
   }
 
   // DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(normalized)) {
-    const [day, month, year] = normalized.split("/");
-    const parsed = new Date(`${year}-${month}-${day}T00:00:00Z`);
-    return Number.isNaN(parsed.getTime())
-      ? null
-      : parsed.toISOString().slice(0, 10);
+  const frenchMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(normalized);
+  if (frenchMatch) {
+    return toIsoDate(
+      Number(frenchMatch[3]),
+      Number(frenchMatch[2]),
+      Number(frenchMatch[1])
+    );
   }
 
   const parsed = new Date(normalized);
