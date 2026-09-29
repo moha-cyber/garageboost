@@ -15,7 +15,7 @@ create policy "own customers" on public.customers for all using (public.owns_gar
 create policy "own vehicles" on public.vehicles for all using (exists(select 1 from public.customers c where c.id=customer_id and public.owns_garage(c.garage_id))) with check(exists(select 1 from public.customers c where c.id=customer_id and public.owns_garage(c.garage_id)));
 create policy "own visits" on public.visits for all using (exists(select 1 from public.customers c where c.id=customer_id and public.owns_garage(c.garage_id))) with check(exists(select 1 from public.customers c where c.id=customer_id and public.owns_garage(c.garage_id)));
 create policy "own campaigns" on public.campaigns for all using (public.owns_garage(garage_id)) with check(public.owns_garage(garage_id));
-create policy "own messages" on public.messages for all using (exists(select 1 from public.campaigns ca where ca.id=campaign_id and public.owns_garage(ca.garage_id))) with check(exists(select 1 from public.campaigns ca where ca.id=campaign_id and public.owns_garage(ca.garage_id)));
+create policy "own messages" on public.messages for all using (exists(select 1 from public.campaigns ca join public.customers cu on cu.id=customer_id where ca.id=campaign_id and cu.garage_id=ca.garage_id and public.owns_garage(ca.garage_id))) with check(exists(select 1 from public.campaigns ca join public.customers cu on cu.id=customer_id where ca.id=campaign_id and cu.garage_id=ca.garage_id and public.owns_garage(ca.garage_id)));
 
 create or replace function public.set_updated_at() returns trigger language plpgsql as $$begin new.updated_at=now(); return new; end;$$;
 create trigger customers_updated_at before update on public.customers for each row execute procedure public.set_updated_at();
